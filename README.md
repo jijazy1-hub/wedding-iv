@@ -117,7 +117,7 @@ Open `.env.local` and fill in your values:
 ```env
 AIRTABLE_API_KEY=patXXXXXXXXXXXXXX.XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 AIRTABLE_BASE_ID=appXXXXXXXXXXXXXX
-AIRTABLE_TABLE_NAME=Guests
+AIRTABLE_TABLE_NAME=Wedding RSVP
 
 NEXT_PUBLIC_WEDDING_TITLE=Joseph & Ada
 NEXT_PUBLIC_WEDDING_DATE=Saturday, 14th December 2024
@@ -133,7 +133,7 @@ npm run dev
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ### 2.6 Test the Flow
-1. Enter a phone number that exists in your Airtable Guests table
+1. Enter a phone number that exists in your Airtable Wedding RSVP table
 2. Verify the name auto-fills correctly
 3. Fill in email and select attendance
 4. If "Yes" → check that Airtable updates and the PDF downloads
@@ -167,7 +167,7 @@ Before deploying, scroll to **"Environment Variables"** and add:
 |------|-------|
 | `AIRTABLE_API_KEY` | Your Personal Access Token |
 | `AIRTABLE_BASE_ID` | Your Base ID (`appXXXX...`) |
-| `AIRTABLE_TABLE_NAME` | `Guests` |
+| `AIRTABLE_TABLE_NAME` | `Wedding RSVP` |
 | `NEXT_PUBLIC_WEDDING_TITLE` | `Joseph & Ada` |
 | `NEXT_PUBLIC_WEDDING_DATE` | `Saturday, 14th December 2024` |
 | `NEXT_PUBLIC_WEDDING_VENUE` | Your venue |
