@@ -117,7 +117,7 @@ Open `.env.local` and fill in your values:
 ```env
 AIRTABLE_API_KEY=patXXXXXXXXXXXXXX.XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 AIRTABLE_BASE_ID=appXXXXXXXXXXXXXX
-AIRTABLE_TABLE_NAME=Wedding RSVP
+AIRTABLE_TABLE_NAME=tblBAfXixKUHh6Jv7
 
 NEXT_PUBLIC_WEDDING_TITLE=Gabby & Esther
 NEXT_PUBLIC_WEDDING_DATE=Saturday, 14th December 2024
@@ -167,7 +167,7 @@ Before deploying, scroll to **"Environment Variables"** and add:
 |------|-------|
 | `AIRTABLE_API_KEY` | Your Personal Access Token |
 | `AIRTABLE_BASE_ID` | Your Base ID (`appXXXX...`) |
-| `AIRTABLE_TABLE_NAME` | `Wedding RSVP` |
+| `AIRTABLE_TABLE_NAME` | `tblBAfXixKUHh6Jv7` |
 | `NEXT_PUBLIC_WEDDING_TITLE` | `Gabby & Esther` |
 | `NEXT_PUBLIC_WEDDING_DATE` | `Saturday, 14th December 2024` |
 | `NEXT_PUBLIC_WEDDING_VENUE` | Your venue |
