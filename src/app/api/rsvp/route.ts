@@ -30,25 +30,26 @@ export async function POST(req: Request) {
       }, { status: 409 });
     }
 
+    const attendanceValue = attendance === "Yes" ? "Yes " : "No";
+    const rsvpStatus = "Confirmed";
+
     if (attendance === "No") {
       const updated = await updateGuest(guest.id, {
         Email: email,
-        RSVP_Status: "Declined",
-        Attendance: "No",
+        RSVP_Status: rsvpStatus,
+        Attendance: attendanceValue,
       });
 
       return NextResponse.json({ guest: updated, message: "Sorry you can't make it ❤️" });
     }
 
     const seatNumber = await getNextSeatNumber();
-    const uniqueCode = generateUniqueCode();
 
     const updated = await updateGuest(guest.id, {
       Email: email,
-      RSVP_Status: "Confirmed",
-      Attendance: "Yes",
+      RSVP_Status: rsvpStatus,
+      Attendance: attendanceValue,
       Seat_Number: seatNumber,
-      Unique_Code: uniqueCode,
     });
 
     return NextResponse.json({ guest: updated, message: "RSVP confirmed! Your card is ready to download." });
