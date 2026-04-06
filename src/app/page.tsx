@@ -66,7 +66,11 @@ export default function HomePage() {
         setStatusMessage("We have recorded your response as declined. Thank you.");
       }
     } catch (error) {
-      setErrorMessage("Unable to reach the server. Please try again.");
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Unable to reach the server. Please try again."
+      );
     } finally {
       setIsVerifying(false);
     }
@@ -105,7 +109,11 @@ export default function HomePage() {
       setGuest(data.guest);
       setStatusMessage(data.message || "RSVP submitted successfully.");
     } catch (error) {
-      setErrorMessage("Unable to reach the server. Please try again.");
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Unable to reach the server. Please try again."
+      );
     } finally {
       setIsSubmitting(false);
     }

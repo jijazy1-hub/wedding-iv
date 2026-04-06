@@ -11,7 +11,7 @@ function getBase() {
 }
 
 function getTableName() {
-  return process.env.AIRTABLE_TABLE_NAME || "Wedding RSVP";
+  return process.env.AIRTABLE_TABLE_NAME || "tblBAfXixKUHh6Jv7";
 }
 
 export type GuestRecord = {
