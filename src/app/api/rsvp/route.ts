@@ -9,6 +9,7 @@ export async function POST(req: Request) {
     const phone = String(body.phone || "").trim();
     const email = String(body.email || "").trim();
     const attendance = String(body.attendance || "").trim();
+    const image = body.image;
 
     if (!phone || !email || !attendance) {
       return NextResponse.json({ error: "Phone, email, and attendance selection are required." }, { status: 400 });
@@ -33,11 +34,20 @@ export async function POST(req: Request) {
     const attendanceValue = attendance === "Yes" ? "Yes " : "No";
     const rsvpStatus = "Confirmed";
 
+    let attachments;
+    if (image) {
+      const base64Data = image.split(',')[1];
+      const buffer = Buffer.from(base64Data, 'base64');
+      const mimeType = image.split(';')[0].split(':')[1];
+      attachments = [{ filename: 'photo.jpg', type: mimeType, data: buffer }];
+    }
+
     if (attendance === "No") {
       const updated = await updateGuest(guest.id, {
         Email: email,
         RSVP_Status: rsvpStatus,
         Attendance: attendanceValue,
+        ...(attachments && { Image: attachments }),
       });
 
       return NextResponse.json({ guest: updated, message: "Sorry you can't make it ❤️" });
@@ -50,6 +60,7 @@ export async function POST(req: Request) {
       RSVP_Status: rsvpStatus,
       Attendance: attendanceValue,
       Seat_Number: seatNumber,
+      ...(attachments && { Image: attachments }),
     });
 
     return NextResponse.json({ guest: updated, message: "RSVP confirmed! Your card is ready to download." });

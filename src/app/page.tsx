@@ -30,6 +30,7 @@ export default function HomePage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [image, setImage] = useState<string | null>(null);
 
   const weddingTitle = process.env.NEXT_PUBLIC_WEDDING_TITLE || "Sarah & Joseph";
   const weddingDate = process.env.NEXT_PUBLIC_WEDDING_DATE || "Saturday, 14th December 2024";
@@ -97,7 +98,7 @@ export default function HomePage() {
       const response = await fetch("/api/rsvp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone: guest.Phone, email, attendance }),
+        body: JSON.stringify({ phone: guest.Phone, email, attendance, image }),
       });
 
       const data = await response.json();
@@ -151,7 +152,18 @@ export default function HomePage() {
     }
   };
 
-  const canSubmit = Boolean(guest && guest.RSVP_Status === "Pending");
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        setImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const canSubmit = Boolean(guest && image && guest.RSVP_Status === "Pending");
   const hasAlreadyResponded = Boolean(guest && guest.RSVP_Status && guest.RSVP_Status !== "Pending");
 
   return (
@@ -219,7 +231,22 @@ export default function HomePage() {
             </button>
           </form>
 
-          {guest ? (
+          {guest && !image ? (
+            <div className="mt-10 rounded-[2rem] border border-champagne-200 bg-champagne-50 p-6">
+              <h3 className="text-xl font-semibold text-deep-green">Upload your photo</h3>
+              <p className="mt-3 text-sm leading-7 text-deep-green/70">
+                Please upload a recent photo of yourself. This will be included on your RSVP card.
+              </p>
+              <div className="mt-6">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="w-full rounded-3xl border border-champagne-200 bg-ivory px-4 py-3 text-base text-deep-green file:mr-4 file:rounded-3xl file:border-0 file:bg-deep-green file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white file:transition file:hover:bg-[#0f2a0f]"
+                />
+              </div>
+            </div>
+          ) : guest && image ? (
             <div className="mt-10 rounded-[2rem] border border-champagne-200 bg-champagne-50 p-6">
               <h3 className="text-xl font-semibold text-deep-green">Guest details</h3>
               <div className="mt-6 grid gap-4 sm:grid-cols-2">

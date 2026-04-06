@@ -24,6 +24,7 @@ export type GuestRecord = {
   Attendance?: string;
   Seat_Number?: number;
   Unique_Code?: string;
+  Image?: any[];
 };
 
 export function normalizePhone(phone: string): string {

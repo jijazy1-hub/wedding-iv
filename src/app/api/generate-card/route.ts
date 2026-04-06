@@ -21,10 +21,13 @@ export async function GET(req: Request) {
       });
     }
 
+    const imageUrl = guest.Image && guest.Image.length > 0 ? guest.Image[0].url : null;
+
     const pdfBytes = await createWeddingCardPdf({
       Name: guest.Name,
       Unique_Code: guest.Unique_Code ?? "",
       Seat_Number: guest.Seat_Number,
+      imageUrl,
     });
 
     return new Response(Buffer.from(pdfBytes), {

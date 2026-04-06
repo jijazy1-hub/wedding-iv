@@ -5,6 +5,7 @@ export type PdfGuest = {
   Name: string;
   Unique_Code: string;
   Seat_Number?: number;
+  imageUrl?: string | null;
 };
 
 export async function createWeddingCardPdf(guest: PdfGuest) {
@@ -95,6 +96,31 @@ export async function createWeddingCardPdf(guest: PdfGuest) {
     width: qrSize,
     height: qrSize,
   });
+
+  if (guest.imageUrl) {
+    try {
+      const imageResponse = await fetch(guest.imageUrl);
+      const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
+      let embeddedImage;
+      const contentType = imageResponse.headers.get('content-type');
+      if (contentType?.includes('png')) {
+        embeddedImage = await pdfDoc.embedPng(imageBuffer);
+      } else if (contentType?.includes('jpg') || contentType?.includes('jpeg')) {
+        embeddedImage = await pdfDoc.embedJpg(imageBuffer);
+      }
+      if (embeddedImage) {
+        const imageSize = 120;
+        page.drawImage(embeddedImage, {
+          x: 50,
+          y: height - 420,
+          width: imageSize,
+          height: imageSize,
+        });
+      }
+    } catch (error) {
+      console.error("Failed to embed image:", error);
+    }
+  }
 
   page.drawText("Present this card on arrival.", {
     x: 50,
