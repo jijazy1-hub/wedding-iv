@@ -26,7 +26,7 @@ export async function GET(req: Request) {
     Seat_Number: guest.Seat_Number,
   });
 
-  return new Response(pdfBytes, {
+  return new Response(Buffer.from(pdfBytes), {
     status: 200,
     headers: {
       "Content-Type": "application/pdf",

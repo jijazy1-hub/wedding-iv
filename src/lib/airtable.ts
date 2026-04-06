@@ -49,7 +49,7 @@ function buildGuest(record: any): GuestRecord {
 
 export async function findGuestByPhone(phone: string) {
   const normalized = normalizePhone(phone);
-  const formula = `AND({Phone} = "${normalized}", {Invited} = 1)`;
+  const formula = `AND({Phone} = "${normalized}", {Invited} = TRUE())`;
   const records = await base(tableName)
     .select({ filterByFormula: formula, maxRecords: 1 })
     .firstPage();
@@ -62,7 +62,7 @@ export async function findGuestByPhone(phone: string) {
 }
 
 export async function findGuestByUniqueCode(code: string) {
-  const formula = `AND({Unique_Code} = "${code}", {Invited} = 1)`;
+  const formula = `AND({Unique_Code} = "${code}", {Invited} = TRUE())`;
   const records = await base(tableName)
     .select({ filterByFormula: formula, maxRecords: 1 })
     .firstPage();

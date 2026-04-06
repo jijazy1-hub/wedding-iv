@@ -27,7 +27,12 @@ export async function createWeddingCardPdf(guest: PdfGuest) {
     borderWidth: 1,
   });
 
-  page.drawText("Joseph & Ada Wedding", {
+  const weddingTitle = process.env.NEXT_PUBLIC_WEDDING_TITLE || "Joseph & Ada Wedding";
+  const weddingDate = process.env.NEXT_PUBLIC_WEDDING_DATE || "Saturday, 14th December 2024";
+  const weddingVenue = process.env.NEXT_PUBLIC_WEDDING_VENUE || "The Grand Ballroom, Eko Hotel & Suites";
+  const weddingTime = process.env.NEXT_PUBLIC_WEDDING_TIME || "12:00 PM";
+
+  page.drawText(weddingTitle, {
     x: 50,
     y: height - 100,
     size: 32,
@@ -67,7 +72,7 @@ export async function createWeddingCardPdf(guest: PdfGuest) {
     color: rgb(0.12, 0.12, 0.12),
   });
 
-  page.drawText("Date: Saturday, 14th December 2024", {
+  page.drawText(`Date: ${weddingDate} · ${weddingTime}`, {
     x: 50,
     y: height - 320,
     size: 14,
@@ -75,7 +80,7 @@ export async function createWeddingCardPdf(guest: PdfGuest) {
     color: rgb(0.18, 0.14, 0.1),
   });
 
-  page.drawText("Venue: The Grand Ballroom, Eko Hotel & Suites", {
+  page.drawText(`Venue: ${weddingVenue}`, {
     x: 50,
     y: height - 340,
     size: 14,
