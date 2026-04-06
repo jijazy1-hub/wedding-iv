@@ -49,6 +49,7 @@ function buildGuest(record: any): GuestRecord {
     Attendance: record.fields.Attendance || "",
     Seat_Number: record.fields.Seat_Number,
     Unique_Code: record.fields.Unique_Code || "",
+    Image: record.fields.Image,
   };
 }
 
