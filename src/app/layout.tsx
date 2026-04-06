@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: process.env.NEXT_PUBLIC_WEDDING_TITLE || "Wedding RSVP",
-  description: "RSVP for the wedding of Joseph and Ada.",
+  description: "RSVP for the wedding of Gabby and Esther.",
 };
 
 export default function RootLayout({

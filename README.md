@@ -1,4 +1,4 @@
-# 💍 Wedding RSVP App — Joseph & Ada
+# 💍 Wedding RSVP App — Gabby & Esther
 
 A production-ready wedding RSVP system built with Next.js 14, Airtable, Tailwind CSS, and pdf-lib. Guests verify their invitation via phone number, submit their RSVP, and download a beautifully designed PDF admission card with a QR code.
 
@@ -119,7 +119,7 @@ AIRTABLE_API_KEY=patXXXXXXXXXXXXXX.XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 AIRTABLE_BASE_ID=appXXXXXXXXXXXXXX
 AIRTABLE_TABLE_NAME=Wedding RSVP
 
-NEXT_PUBLIC_WEDDING_TITLE=Joseph & Ada
+NEXT_PUBLIC_WEDDING_TITLE=Gabby & Esther
 NEXT_PUBLIC_WEDDING_DATE=Saturday, 14th December 2024
 NEXT_PUBLIC_WEDDING_VENUE=The Grand Ballroom, Eko Hotel & Suites, Victoria Island, Lagos
 NEXT_PUBLIC_WEDDING_TIME=12:00 PM
@@ -168,7 +168,7 @@ Before deploying, scroll to **"Environment Variables"** and add:
 | `AIRTABLE_API_KEY` | Your Personal Access Token |
 | `AIRTABLE_BASE_ID` | Your Base ID (`appXXXX...`) |
 | `AIRTABLE_TABLE_NAME` | `Wedding RSVP` |
-| `NEXT_PUBLIC_WEDDING_TITLE` | `Joseph & Ada` |
+| `NEXT_PUBLIC_WEDDING_TITLE` | `Gabby & Esther` |
 | `NEXT_PUBLIC_WEDDING_DATE` | `Saturday, 14th December 2024` |
 | `NEXT_PUBLIC_WEDDING_VENUE` | Your venue |
 | `NEXT_PUBLIC_WEDDING_TIME` | `12:00 PM` |
@@ -179,7 +179,7 @@ Click **"Deploy"**. In ~2 minutes your app will be live at:
 
 ### 3.5 Custom Domain (Optional)
 1. In Vercel dashboard → **Settings** → **Domains**
-2. Add your domain (e.g. `rsvp.josephandada.com`)
+2. Add your domain (e.g. `rsvp.gabbyandesther.com`)
 3. Follow DNS instructions from Vercel
 
 ---
@@ -256,7 +256,7 @@ Verifies if a guest is invited.
   "found": true,
   "guest": {
     "id": "recXXXX",
-    "name": "Ada Okafor",
+    "name": "Esther Johnson",
     "rsvpStatus": "Pending",
     "attendance": null,
     "seatNumber": null,
@@ -279,7 +279,7 @@ Submits RSVP and updates Airtable.
 ```json
 {
   "phone": "08012345678",
-  "email": "ada@example.com",
+  "email": "esther@example.com",
   "attendance": "Yes"
 }
 ```
@@ -289,7 +289,7 @@ Submits RSVP and updates Airtable.
 {
   "success": true,
   "attendance": "Yes",
-  "guestName": "Ada Okafor",
+  "guestName": "Esther Johnson",
   "seatNumber": 7,
   "uniqueCode": "WED-AB1-2CD"
 }
@@ -303,7 +303,7 @@ Generates a PDF RSVP card. Returns binary PDF data.
 **Request:**
 ```json
 {
-  "guestName": "Ada Okafor",
+  "guestName": "Esther Johnson",
   "uniqueCode": "WED-AB1-2CD",
   "seatNumber": 7
 }
