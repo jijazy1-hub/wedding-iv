@@ -2,13 +2,14 @@ import Airtable from "airtable";
 
 const apiKey = process.env.AIRTABLE_API_KEY;
 const baseId = process.env.AIRTABLE_BASE_ID;
-const tableName = process.env.AIRTABLE_TABLE_NAME || "Guests";
+const tableName = process.env.AIRTABLE_TABLE_NAME || "Wedding RSVP";
 
-if (!apiKey || !baseId) {
-  throw new Error("Missing Airtable environment variables. Set AIRTABLE_API_KEY and AIRTABLE_BASE_ID.");
+function getBase() {
+  if (!apiKey || !baseId) {
+    throw new Error("Missing Airtable environment variables. Set AIRTABLE_API_KEY and AIRTABLE_BASE_ID.");
+  }
+  return new Airtable({ apiKey }).base(baseId);
 }
-
-const base = new Airtable({ apiKey }).base(baseId);
 
 export type GuestRecord = {
   id: string;
@@ -50,7 +51,7 @@ function buildGuest(record: any): GuestRecord {
 export async function findGuestByPhone(phone: string) {
   const normalized = normalizePhone(phone);
   const formula = `AND({Phone} = "${normalized}", {Invited} = TRUE())`;
-  const records = await base(tableName)
+  const records = await getBase().table(tableName)
     .select({ filterByFormula: formula, maxRecords: 1 })
     .firstPage();
 
@@ -63,7 +64,7 @@ export async function findGuestByPhone(phone: string) {
 
 export async function findGuestByUniqueCode(code: string) {
   const formula = `AND({Unique_Code} = "${code}", {Invited} = TRUE())`;
-  const records = await base(tableName)
+  const records = await getBase().table(tableName)
     .select({ filterByFormula: formula, maxRecords: 1 })
     .firstPage();
 
@@ -75,7 +76,7 @@ export async function findGuestByUniqueCode(code: string) {
 }
 
 export async function getNextSeatNumber() {
-  const records = await base(tableName)
+  const records = await getBase().table(tableName)
     .select({
       maxRecords: 1,
       sort: [{ field: "Seat_Number", direction: "desc" }],
@@ -92,7 +93,7 @@ export async function getNextSeatNumber() {
 }
 
 export async function updateGuest(id: string, fields: Record<string, any>) {
-  const [updated] = await base(tableName).update([{ id, fields }]);
+  const [updated] = await getBase().table(tableName).update([{ id, fields }]);
   return buildGuest(updated);
 }
 
