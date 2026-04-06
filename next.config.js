@@ -1,8 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    serverComponentsExternalPackages: ["pdf-lib", "qrcode"],
-  },
+  serverExternalPackages: ["pdf-lib", "qrcode"],
 };
 
 module.exports = nextConfig;
