@@ -11,7 +11,7 @@ function getBase() {
 }
 
 function getTableName() {
-  return process.env.AIRTABLE_TABLE_NAME || "Guest List";
+  return process.env.AIRTABLE_TABLE_NAME || "Guests";
 }
 
 export type GuestRecord = {
