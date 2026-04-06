@@ -31,7 +31,7 @@ export default function HomePage() {
   const [isVerifying, setIsVerifying] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const weddingTitle = process.env.NEXT_PUBLIC_WEDDING_TITLE || "Gabby & Esther Wedding";
+  const weddingTitle = process.env.NEXT_PUBLIC_WEDDING_TITLE || "Sarah & Joseph";
   const weddingDate = process.env.NEXT_PUBLIC_WEDDING_DATE || "Saturday, 14th December 2024";
   const weddingVenue = process.env.NEXT_PUBLIC_WEDDING_VENUE || "The Grand Ballroom, Eko Hotel & Suites";
 
