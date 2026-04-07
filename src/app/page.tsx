@@ -32,7 +32,7 @@ export default function HomePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [image, setImage] = useState<string | null>(null);
 
-  const weddingTitle = process.env.NEXT_PUBLIC_WEDDING_TITLE || "Sarah & Joseph";
+  const weddingTitle = process.env.NEXT_PUBLIC_WEDDING_TITLE || "Gabby & Esther";
   const weddingDate = process.env.NEXT_PUBLIC_WEDDING_DATE || "Saturday, 14th December 2024";
   const weddingVenue = process.env.NEXT_PUBLIC_WEDDING_VENUE || "The Grand Ballroom, Eko Hotel & Suites";
 

@@ -28,7 +28,7 @@ export async function createWeddingCardPdf(guest: PdfGuest) {
     borderWidth: 1,
   });
 
-  const weddingTitle = process.env.NEXT_PUBLIC_WEDDING_TITLE || "Gabby & Esther Wedding";
+  const weddingTitle = process.env.NEXT_PUBLIC_WEDDING_TITLE || "Gabby & Esther";
   const weddingDate = process.env.NEXT_PUBLIC_WEDDING_DATE || "Saturday, 14th December 2024";
   const weddingVenue = process.env.NEXT_PUBLIC_WEDDING_VENUE || "The Grand Ballroom, Eko Hotel & Suites";
   const weddingTime = process.env.NEXT_PUBLIC_WEDDING_TIME || "12:00 PM";
