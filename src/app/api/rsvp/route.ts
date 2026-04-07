@@ -3,6 +3,36 @@ import { findGuestByPhone, generateUniqueCode, getNextSeatNumber, updateGuest } 
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+async function uploadAttachment(recordId: string, attachment: { filename: string; type: string; data: Buffer }) {
+  const apiKey = process.env.AIRTABLE_API_KEY;
+  const baseId = process.env.AIRTABLE_BASE_ID;
+  const tableName = process.env.AIRTABLE_TABLE_NAME || "Guests";
+
+  if (!apiKey || !baseId) {
+    throw new Error("Missing Airtable environment variables.");
+  }
+
+  const url = `https://api.airtable.com/v0/${baseId}/${tableName}/${recordId}/Image`;
+
+  const formData = new FormData();
+  const blob = new Blob([new Uint8Array(attachment.data)], { type: attachment.type });
+  formData.append('file', blob, attachment.filename);
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to upload attachment: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -39,7 +69,7 @@ export async function POST(req: Request) {
       const base64Data = image.split(',')[1];
       const buffer = Buffer.from(base64Data, 'base64');
       const mimeType = image.split(';')[0].split(':')[1];
-      attachments = [{ filename: 'photo.jpg', type: mimeType, data: buffer }];
+      attachments = { filename: 'photo.jpg', type: mimeType, data: buffer };
     }
 
     if (attendance === "No") {
@@ -47,8 +77,12 @@ export async function POST(req: Request) {
         Email: email,
         RSVP_Status: rsvpStatus,
         Attendance: attendanceValue,
-        ...(attachments && { Image: attachments }),
       });
+
+      // Upload image if provided
+      if (attachments) {
+        await uploadAttachment(updated.id, attachments);
+      }
 
       return NextResponse.json({ guest: updated, message: "Sorry you can't make it ❤️" });
     }
@@ -60,8 +94,12 @@ export async function POST(req: Request) {
       RSVP_Status: rsvpStatus,
       Attendance: attendanceValue,
       Seat_Number: seatNumber,
-      ...(attachments && { Image: attachments }),
     });
+
+    // Upload image if provided
+    if (attachments) {
+      await uploadAttachment(updated.id, attachments);
+    }
 
     return NextResponse.json({ guest: updated, message: "RSVP confirmed! Your card is ready to download." });
   } catch (error) {
