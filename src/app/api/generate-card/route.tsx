@@ -63,10 +63,11 @@ export async function POST(req: Request) {
     const INKLT   = '#4A3D2A';
     const W = 800, H = 1150;
 
-    const fonts: { name: string; data: ArrayBuffer; weight: number; style: 'normal' }[] = [];
-    if (fontScript)  fonts.push({ name: 'Script',  data: fontScript,  weight: 400, style: 'normal' });
-    if (fontBold)    fonts.push({ name: 'Serif',   data: fontBold,    weight: 700, style: 'normal' });
-    if (fontRegular) fonts.push({ name: 'Serif',   data: fontRegular, weight: 400, style: 'normal' });
+    type W = 100|200|300|400|500|600|700|800|900;
+    const fonts: { name: string; data: ArrayBuffer; weight: W; style: 'normal' }[] = [];
+    if (fontScript)  fonts.push({ name: 'Script',  data: fontScript,  weight: 400 as W, style: 'normal' });
+    if (fontBold)    fonts.push({ name: 'Serif',   data: fontBold,    weight: 700 as W, style: 'normal' });
+    if (fontRegular) fonts.push({ name: 'Serif',   data: fontRegular, weight: 400 as W, style: 'normal' });
 
     const scriptFamily  = fontScript  ? 'Script' : 'serif';
     const serifFamily   = fontBold    ? 'Serif'  : 'serif';
