@@ -145,7 +145,7 @@ export default function HomePage() {
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `${guest.Name.replace(/\s+/g, "_")}-RSVP-card.pdf`;
+      link.download = `${guest.Name.replace(/\s+/g, "_")}-RSVP-card.png`;
       document.body.appendChild(link);
       link.click();
       link.remove();
