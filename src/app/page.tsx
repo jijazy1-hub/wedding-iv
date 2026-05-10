@@ -133,7 +133,7 @@ export default function HomePage() {
       const response = await fetch("/api/generate-card", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: guest.Unique_Code, imageBase64: image }),
+        body: JSON.stringify({ code: guest.Unique_Code, imageBase64: image === "skip" ? null : image }),
       });
       if (!response.ok) {
         try {
@@ -174,10 +174,10 @@ export default function HomePage() {
     }
   };
 
-  const canSubmit = Boolean(guest && image && guest.RSVP_Status === "Pending");
+  const canSubmit = Boolean(guest && image && image !== "skip" && guest.RSVP_Status === "Pending");
   const hasAlreadyResponded = Boolean(guest && guest.RSVP_Status && guest.RSVP_Status !== "Pending");
-  // Confirmed/declined guests skip the photo step — they can download immediately
-  const showForm = Boolean(guest && (image || hasAlreadyResponded));
+  // Show form once photo is uploaded, OR if confirmed/declined (photo optional for returning guests)
+  const showForm = Boolean(guest && image) || hasAlreadyResponded;
 
   return (
     <main className="min-h-screen bg-ivory text-deep-green">
@@ -244,7 +244,7 @@ export default function HomePage() {
             </button>
           </form>
 
-          {guest && !image && !hasAlreadyResponded ? (
+          {guest && !image && !showForm ? (
             <div className="mt-10 rounded-[2rem] border border-champagne-200 bg-champagne-50 p-6">
               <h3 className="text-xl font-semibold text-deep-green">Upload your photo</h3>
               <p className="mt-3 text-sm leading-7 text-deep-green/70">
@@ -257,6 +257,28 @@ export default function HomePage() {
                   onChange={handleImageUpload}
                   className="w-full rounded-3xl border border-champagne-200 bg-ivory px-4 py-3 text-base text-deep-green file:mr-4 file:rounded-3xl file:border-0 file:bg-deep-green file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white file:transition file:hover:bg-[#0f2a0f]"
                 />
+              </div>
+            </div>
+          ) : guest && !image && hasAlreadyResponded ? (
+            <div className="mt-10 rounded-[2rem] border border-champagne-200 bg-champagne-50 p-6">
+              <h3 className="text-xl font-semibold text-deep-green">Update your photo <span className="text-sm font-normal text-deep-green/60">(optional)</span></h3>
+              <p className="mt-3 text-sm leading-7 text-deep-green/70">
+                Upload a photo to include on your card, or skip to download directly.
+              </p>
+              <div className="mt-6 flex flex-col gap-3">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="w-full rounded-3xl border border-champagne-200 bg-ivory px-4 py-3 text-base text-deep-green file:mr-4 file:rounded-3xl file:border-0 file:bg-deep-green file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white file:transition file:hover:bg-[#0f2a0f]"
+                />
+                <button
+                  type="button"
+                  onClick={() => setImage("skip")}
+                  className="inline-flex items-center justify-center rounded-3xl border border-champagne-200 bg-white px-6 py-3 text-sm font-semibold text-deep-green transition hover:bg-champagne-50"
+                >
+                  Skip — download without photo
+                </button>
               </div>
             </div>
           ) : guest && showForm ? (
