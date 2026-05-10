@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { findGuestByPhone } from "@/lib/airtable";
+import { findGuestByPhone, generateUniqueCode, getNextSeatNumber, updateGuest } from "@/lib/airtable";
 
 export async function POST(req: Request) {
   try {
@@ -10,9 +10,20 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Phone number is required." }, { status: 400 });
     }
 
-    const guest = await findGuestByPhone(phone);
+    let guest = await findGuestByPhone(phone);
     if (!guest) {
       return NextResponse.json({ error: "You are not invited or your phone is not registered." }, { status: 404 });
+    }
+
+    // If guest is confirmed but has no unique code (RSVPed before the fix),
+    // generate and save one now so they can download their card.
+    if (guest.RSVP_Status === "Confirmed" && !guest.Unique_Code) {
+      const uniqueCode = generateUniqueCode();
+      const seatNumber = guest.Seat_Number ?? await getNextSeatNumber();
+      guest = await updateGuest(guest.id, {
+        Unique_Code: uniqueCode,
+        Seat_Number: seatNumber,
+      });
     }
 
     return NextResponse.json({ guest });
