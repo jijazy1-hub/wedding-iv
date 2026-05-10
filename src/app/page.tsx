@@ -252,7 +252,7 @@ export default function HomePage() {
                 />
               </div>
             </div>
-          ) : showForm ? (
+          ) : guest && showForm ? (
             <div className="mt-10 rounded-[2rem] border border-champagne-200 bg-champagne-50 p-6">
               <h3 className="text-xl font-semibold text-deep-green">Guest details</h3>
               <div className="mt-6 grid gap-4 sm:grid-cols-2">
