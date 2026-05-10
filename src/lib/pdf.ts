@@ -5,7 +5,7 @@ export type PdfGuest = {
   Name: string;
   Unique_Code: string;
   Seat_Number?: number;
-  imageUrl?: string | null;
+  imageBase64?: string | null; // full data URI e.g. "data:image/jpeg;base64,..."
 };
 
 export async function createWeddingCardPdf(guest: PdfGuest) {
@@ -19,6 +19,12 @@ export async function createWeddingCardPdf(guest: PdfGuest) {
   const qrBase64 = qrDataUrl.split(",")[1];
   const qrImage = await pdfDoc.embedPng(Buffer.from(qrBase64, "base64"));
 
+  const weddingTitle = process.env.NEXT_PUBLIC_WEDDING_TITLE || "Gabby & Esther";
+  const weddingDate = process.env.NEXT_PUBLIC_WEDDING_DATE || "Saturday, 14th December 2024";
+  const weddingVenue = process.env.NEXT_PUBLIC_WEDDING_VENUE || "The Grand Ballroom, Eko Hotel & Suites";
+  const weddingTime = process.env.NEXT_PUBLIC_WEDDING_TIME || "12:00 PM";
+
+  // ── Outer border ──────────────────────────────────────────────
   page.drawRectangle({
     x: 32,
     y: 32,
@@ -28,106 +34,140 @@ export async function createWeddingCardPdf(guest: PdfGuest) {
     borderWidth: 1,
   });
 
-  const weddingTitle = process.env.NEXT_PUBLIC_WEDDING_TITLE || "Gabby & Esther";
-  const weddingDate = process.env.NEXT_PUBLIC_WEDDING_DATE || "Saturday, 14th December 2024";
-  const weddingVenue = process.env.NEXT_PUBLIC_WEDDING_VENUE || "The Grand Ballroom, Eko Hotel & Suites";
-  const weddingTime = process.env.NEXT_PUBLIC_WEDDING_TIME || "12:00 PM";
+  // ── Header band ───────────────────────────────────────────────
+  page.drawRectangle({
+    x: 32,
+    y: height - 170,
+    width: width - 64,
+    height: 138,
+    color: rgb(0.16, 0.12, 0.06),
+    borderWidth: 0,
+  });
 
   page.drawText(weddingTitle, {
     x: 50,
-    y: height - 100,
+    y: height - 110,
     size: 32,
     font: titleFont,
-    color: rgb(0.16, 0.12, 0.06),
+    color: rgb(0.96, 0.88, 0.72),
   });
 
-  page.drawText("RSVP Admission Card", {
+  page.drawText("RSVP ADMISSION CARD", {
     x: 50,
-    y: height - 140,
-    size: 18,
-    font: textFont,
-    color: rgb(0.35, 0.24, 0.16),
+    y: height - 148,
+    size: 11,
+    font: titleFont,
+    color: rgb(0.75, 0.65, 0.50),
   });
 
-  page.drawText(`Guest Name: ${guest.Name}`, {
+  // ── Guest photo (top-right inside header band) ─────────────────
+  const photoSize = 110;
+  const photoX = width - photoSize - 50;
+  const photoY = height - 170 + 14;
+
+  if (guest.imageBase64) {
+    try {
+      const [header, b64] = guest.imageBase64.split(",");
+      const mimeType = header.match(/data:([^;]+)/)?.[1] ?? "image/jpeg";
+      const imgBuf = Buffer.from(b64, "base64");
+
+      const embeddedImage =
+        mimeType === "image/png"
+          ? await pdfDoc.embedPng(imgBuf)
+          : await pdfDoc.embedJpg(imgBuf);
+
+      // White border around photo
+      page.drawRectangle({
+        x: photoX - 3,
+        y: photoY - 3,
+        width: photoSize + 6,
+        height: photoSize + 6,
+        color: rgb(1, 1, 1),
+        borderWidth: 0,
+      });
+
+      page.drawImage(embeddedImage, {
+        x: photoX,
+        y: photoY,
+        width: photoSize,
+        height: photoSize,
+      });
+    } catch (err) {
+      console.error("Failed to embed guest photo:", err);
+    }
+  }
+
+  // ── Guest details section ─────────────────────────────────────
+  const detailsTop = height - 200;
+
+  const field = (label: string, value: string, y: number) => {
+    page.drawText(label.toUpperCase(), {
+      x: 50,
+      y,
+      size: 9,
+      font: titleFont,
+      color: rgb(0.50, 0.40, 0.28),
+    });
+    page.drawText(value, {
+      x: 50,
+      y: y - 18,
+      size: 15,
+      font: textFont,
+      color: rgb(0.12, 0.12, 0.12),
+    });
+  };
+
+  field("Guest Name", guest.Name, detailsTop);
+  field("Seat Number", String(guest.Seat_Number ?? "TBA"), detailsTop - 54);
+  field("Unique Code", guest.Unique_Code, detailsTop - 108);
+
+  // Divider line
+  page.drawRectangle({
     x: 50,
-    y: height - 210,
-    size: 16,
-    font: textFont,
-    color: rgb(0.12, 0.12, 0.12),
+    y: detailsTop - 148,
+    width: width - 100,
+    height: 1,
+    color: rgb(0.85, 0.78, 0.65),
   });
 
-  page.drawText(`Seat Number: ${guest.Seat_Number ?? "TBA"}`, {
-    x: 50,
-    y: height - 240,
-    size: 16,
-    font: textFont,
-    color: rgb(0.12, 0.12, 0.12),
+  field("Date & Time", `${weddingDate}  ·  ${weddingTime}`, detailsTop - 172);
+  field("Venue", weddingVenue, detailsTop - 226);
+
+  // ── QR code ───────────────────────────────────────────────────
+  const qrSize = 150;
+  const qrX = width - qrSize - 50;
+  const qrY = 100;
+
+  page.drawText("SCAN ON ARRIVAL", {
+    x: qrX + 15,
+    y: qrY + qrSize + 8,
+    size: 8,
+    font: titleFont,
+    color: rgb(0.50, 0.40, 0.28),
   });
 
-  page.drawText(`Unique Code: ${guest.Unique_Code}`, {
-    x: 50,
-    y: height - 270,
-    size: 16,
-    font: textFont,
-    color: rgb(0.12, 0.12, 0.12),
-  });
-
-  page.drawText(`Date: ${weddingDate} · ${weddingTime}`, {
-    x: 50,
-    y: height - 320,
-    size: 14,
-    font: textFont,
-    color: rgb(0.18, 0.14, 0.1),
-  });
-
-  page.drawText(`Venue: ${weddingVenue}`, {
-    x: 50,
-    y: height - 340,
-    size: 14,
-    font: textFont,
-    color: rgb(0.18, 0.14, 0.1),
-  });
-
-  const qrSize = 170;
   page.drawImage(qrImage, {
-    x: width - qrSize - 60,
-    y: 110,
+    x: qrX,
+    y: qrY,
     width: qrSize,
     height: qrSize,
   });
 
-  if (guest.imageUrl) {
-    try {
-      const imageResponse = await fetch(guest.imageUrl);
-      const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
-      let embeddedImage;
-      const contentType = imageResponse.headers.get('content-type');
-      if (contentType?.includes('png')) {
-        embeddedImage = await pdfDoc.embedPng(imageBuffer);
-      } else if (contentType?.includes('jpg') || contentType?.includes('jpeg')) {
-        embeddedImage = await pdfDoc.embedJpg(imageBuffer);
-      }
-      if (embeddedImage) {
-        const imageSize = 120;
-        page.drawImage(embeddedImage, {
-          x: 50,
-          y: height - 420,
-          width: imageSize,
-          height: imageSize,
-        });
-      }
-    } catch (error) {
-      console.error("Failed to embed image:", error);
-    }
-  }
-
-  page.drawText("Present this card on arrival.", {
+  // ── Footer ────────────────────────────────────────────────────
+  page.drawText("Please present this card upon arrival.", {
     x: 50,
     y: 90,
-    size: 12,
+    size: 11,
     font: textFont,
     color: rgb(0.28, 0.22, 0.16),
+  });
+
+  page.drawText("We look forward to celebrating with you!", {
+    x: 50,
+    y: 70,
+    size: 10,
+    font: textFont,
+    color: rgb(0.45, 0.35, 0.22),
   });
 
   return pdfDoc.save();

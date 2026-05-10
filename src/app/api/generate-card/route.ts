@@ -1,10 +1,13 @@
 import { createWeddingCardPdf } from "@/lib/pdf";
 import { findGuestByUniqueCode } from "@/lib/airtable";
 
-export async function GET(req: Request) {
+// Accept POST so the client can send the base64 image alongside the code.
+// This avoids the unreliable Airtable attachment round-trip entirely.
+export async function POST(req: Request) {
   try {
-    const url = new URL(req.url);
-    const code = url.searchParams.get("code")?.trim();
+    const body = await req.json();
+    const code = String(body.code ?? "").trim();
+    const imageBase64: string | null = body.imageBase64 ?? null;
 
     if (!code) {
       return new Response(JSON.stringify({ error: "Unique code is required." }), {
@@ -21,13 +24,11 @@ export async function GET(req: Request) {
       });
     }
 
-    const imageUrl = guest.Image && guest.Image.length > 0 ? guest.Image[0].url : null;
-
     const pdfBytes = await createWeddingCardPdf({
       Name: guest.Name,
       Unique_Code: guest.Unique_Code ?? "",
       Seat_Number: guest.Seat_Number,
-      imageUrl,
+      imageBase64,
     });
 
     return new Response(Buffer.from(pdfBytes), {
@@ -39,9 +40,9 @@ export async function GET(req: Request) {
     });
   } catch (error) {
     console.error("/api/generate-card error:", error);
-    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : "Server error" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ error: error instanceof Error ? error.message : "Server error" }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
+    );
   }
 }

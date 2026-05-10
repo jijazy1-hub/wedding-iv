@@ -61,8 +61,8 @@ export async function POST(req: Request) {
       }, { status: 409 });
     }
 
-    const attendanceValue = attendance === "Yes" ? "Yes " : "No";
-    const rsvpStatus = "Confirmed";
+    const attendanceValue = attendance === "Yes" ? "Yes" : "No";
+    const rsvpStatus = attendance === "Yes" ? "Confirmed" : "Declined";
 
     let attachments;
     if (image) {

@@ -130,7 +130,11 @@ export default function HomePage() {
     setStatusMessage("Preparing your RSVP card...");
 
     try {
-      const response = await fetch(`/api/generate-card?code=${encodeURIComponent(guest.Unique_Code)}`);
+      const response = await fetch("/api/generate-card", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: guest.Unique_Code, imageBase64: image }),
+      });
       if (!response.ok) {
         const body = await response.json();
         setErrorMessage(body.error || "Failed to generate the card.");
