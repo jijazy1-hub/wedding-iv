@@ -136,8 +136,14 @@ export default function HomePage() {
         body: JSON.stringify({ code: guest.Unique_Code, imageBase64: image }),
       });
       if (!response.ok) {
-        const body = await response.json();
-        setErrorMessage(body.error || "Failed to generate the card.");
+        try {
+          const body = await response.json();
+          setErrorMessage(body.error || `Server error ${response.status}`);
+        } catch {
+          const text = await response.text().catch(() => '');
+          setErrorMessage(`Server error ${response.status}: ${text.slice(0, 150)}`);
+        }
+        setStatusMessage(null);
         return;
       }
 
@@ -152,7 +158,8 @@ export default function HomePage() {
       URL.revokeObjectURL(url);
       setStatusMessage("Your RSVP card is ready.");
     } catch (error) {
-      setErrorMessage("Could not download the RSVP card.");
+      setStatusMessage(null);
+      setErrorMessage("Download failed: " + (error instanceof Error ? error.message : String(error)));
     }
   };
 
