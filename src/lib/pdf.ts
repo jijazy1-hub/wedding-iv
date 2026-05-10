@@ -167,7 +167,7 @@ export async function createWeddingCardPdf(guest: PdfGuest) {
     headerY + headerH - 142, oblique, 9, C.goldLight, W);
 
   // RSVP ADMISSION CARD label at bottom of header
-  drawCentred(page, "✦  R S V P  A D M I S S I O N  C A R D  ✦",
+  drawCentred(page, "- R S V P  A D M I S S I O N  C A R D -",
     headerY + 18, bold, 9, C.goldLight, W);
 
   // ═══════════════════════════════════════════════════════════════
@@ -312,7 +312,7 @@ export async function createWeddingCardPdf(guest: PdfGuest) {
   page.drawRectangle({ x: 28, y: 28, width: W - 56, height: footerH, color: C.darkGreen });
   page.drawRectangle({ x: 28, y: 28 + footerH - 4, width: W - 56, height: 4, color: C.gold });
 
-  drawCentred(page, "We can't wait to celebrate with you  ♥", 44,
+  drawCentred(page, "We can't wait to celebrate with you  -", 44,
     oblique, 11, C.goldPale, W);
   drawCentred(page, `#${weddingTitle.replace(/\s*&\s*/, "And").replace(/\s/g, "")}2024`,
     32, bold, 8, C.goldLight, W);
