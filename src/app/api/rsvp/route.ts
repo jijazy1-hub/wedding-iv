@@ -3,109 +3,76 @@ import { findGuestByPhone, generateUniqueCode, getNextSeatNumber, updateGuest } 
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-async function uploadAttachment(recordId: string, attachment: { filename: string; type: string; data: Buffer }) {
-  const apiKey = process.env.AIRTABLE_API_KEY;
-  const baseId = process.env.AIRTABLE_BASE_ID;
-  const tableName = process.env.AIRTABLE_TABLE_NAME || "Guests";
-
-  if (!apiKey || !baseId) {
-    throw new Error("Missing Airtable environment variables.");
-  }
-
-  const url = `https://api.airtable.com/v0/${baseId}/${tableName}/${recordId}/Image`;
-
-  const formData = new FormData();
-  const blob = new Blob([new Uint8Array(attachment.data)], { type: attachment.type });
-  formData.append('file', blob, attachment.filename);
-
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-    },
-    body: formData,
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to upload attachment: ${response.statusText}`);
-  }
-
-  return response.json();
-}
-
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const phone = String(body.phone || "").trim();
-    const email = String(body.email || "").trim();
+    const body       = await req.json();
+    const phone      = String(body.phone      || "").trim();
+    const email      = String(body.email      || "").trim();
     const attendance = String(body.attendance || "").trim();
-    const image = body.image;
 
     if (!phone || !email || !attendance) {
-      return NextResponse.json({ error: "Phone, email, and attendance selection are required." }, { status: 400 });
+      return NextResponse.json(
+        { error: "Phone, email, and attendance are required." },
+        { status: 400 }
+      );
     }
 
     if (!emailRegex.test(email)) {
-      return NextResponse.json({ error: "Please enter a valid email address." }, { status: 400 });
+      return NextResponse.json(
+        { error: "Please enter a valid email address." },
+        { status: 400 }
+      );
     }
 
     const guest = await findGuestByPhone(phone);
     if (!guest) {
-      return NextResponse.json({ error: "Guest not found. Please verify your phone number first." }, { status: 404 });
+      return NextResponse.json(
+        { error: "Guest not found. Please verify your phone number first." },
+        { status: 404 }
+      );
     }
 
     if (guest.RSVP_Status === "Confirmed" || guest.RSVP_Status === "Declined") {
-      return NextResponse.json({
-        error: "This guest has already submitted an RSVP.",
-        guest,
-      }, { status: 409 });
+      return NextResponse.json(
+        { error: "This guest has already submitted an RSVP.", guest },
+        { status: 409 }
+      );
     }
 
     const attendanceValue = attendance === "Yes" ? "Yes" : "No";
-    const rsvpStatus = attendance === "Yes" ? "Confirmed" : "Declined";
-
-    let attachments;
-    if (image) {
-      const base64Data = image.split(',')[1];
-      const buffer = Buffer.from(base64Data, 'base64');
-      const mimeType = image.split(';')[0].split(':')[1];
-      attachments = { filename: 'photo.jpg', type: mimeType, data: buffer };
-    }
+    const rsvpStatus      = attendance === "Yes" ? "Confirmed" : "Declined";
 
     if (attendance === "No") {
       const updated = await updateGuest(guest.id, {
-        Email: email,
+        Email:       email,
         RSVP_Status: rsvpStatus,
-        Attendance: attendanceValue,
+        Attendance:  attendanceValue,
       });
-
-      // Upload image if provided
-      if (attachments) {
-        await uploadAttachment(updated.id, attachments);
-      }
-
-      return NextResponse.json({ guest: updated, message: "Sorry you can't make it ❤️" });
+      return NextResponse.json({ guest: updated, message: "Sorry you can't make it. Thank you for letting us know." });
     }
 
-    const seatNumber = await getNextSeatNumber();
+    // ── Attending: assign seat + generate unique code ─────────────
+    const [seatNumber, uniqueCode] = await Promise.all([
+      getNextSeatNumber(),
+      Promise.resolve(generateUniqueCode()),   // sync but wrap for Promise.all clarity
+    ]);
 
     const updated = await updateGuest(guest.id, {
-      Email: email,
+      Email:       email,
       RSVP_Status: rsvpStatus,
-      Attendance: attendanceValue,
+      Attendance:  attendanceValue,
       Seat_Number: seatNumber,
+      Unique_Code: uniqueCode,                 // ← THIS was missing — the root cause
     });
 
-    // Upload image if provided
-    if (attachments) {
-      await uploadAttachment(updated.id, attachments);
-    }
-
-    return NextResponse.json({ guest: updated, message: "RSVP confirmed! Your card is ready to download." });
+    return NextResponse.json({
+      guest: updated,
+      message: "RSVP confirmed! Your card is ready to download.",
+    });
   } catch (error) {
     console.error("/api/rsvp error:", error);
     return NextResponse.json(
-      { error: (error instanceof Error ? error.message : "Server error") },
+      { error: error instanceof Error ? error.message : "Server error" },
       { status: 500 }
     );
   }

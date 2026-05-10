@@ -169,6 +169,8 @@ export default function HomePage() {
 
   const canSubmit = Boolean(guest && image && guest.RSVP_Status === "Pending");
   const hasAlreadyResponded = Boolean(guest && guest.RSVP_Status && guest.RSVP_Status !== "Pending");
+  // Confirmed/declined guests skip the photo step — they can download immediately
+  const showForm = Boolean(guest && (image || hasAlreadyResponded));
 
   return (
     <main className="min-h-screen bg-ivory text-deep-green">
@@ -235,7 +237,7 @@ export default function HomePage() {
             </button>
           </form>
 
-          {guest && !image ? (
+          {guest && !image && !hasAlreadyResponded ? (
             <div className="mt-10 rounded-[2rem] border border-champagne-200 bg-champagne-50 p-6">
               <h3 className="text-xl font-semibold text-deep-green">Upload your photo</h3>
               <p className="mt-3 text-sm leading-7 text-deep-green/70">
@@ -250,7 +252,7 @@ export default function HomePage() {
                 />
               </div>
             </div>
-          ) : guest && image ? (
+          ) : showForm ? (
             <div className="mt-10 rounded-[2rem] border border-champagne-200 bg-champagne-50 p-6">
               <h3 className="text-xl font-semibold text-deep-green">Guest details</h3>
               <div className="mt-6 grid gap-4 sm:grid-cols-2">
