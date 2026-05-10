@@ -8,7 +8,74 @@ export type PdfGuest = {
   imageBase64?: string | null;
 };
 
-// Colour palette
+// Sanitize any string before passing to pdf-lib standard fonts.
+// Standard fonts use WinAnsi which only supports a subset of Latin chars.
+// This replaces common Unicode punctuation with ASCII equivalents,
+// then strips anything above 0x7E (printable ASCII range).
+function safe(str: string): string {
+  return str
+    .replace(/[\u2018\u2019\u0060]/g, "'")   // smart single quotes -> '
+    .replace(/[\u201C\u201D]/g, '"')           // smart double quotes -> "
+    .replace(/[\u2013\u2014]/g, '-')           // en/em dash -> -
+    .replace(/\u2026/g, '...')                 // ellipsis -> ...
+    .replace(/\u00E9/g, 'e')                   // e acute
+    .replace(/\u00E8/g, 'e')
+    .replace(/\u00EA/g, 'e')
+    .replace(/\u00EB/g, 'e')
+    .replace(/\u00E0/g, 'a')
+    .replace(/\u00E1/g, 'a')
+    .replace(/\u00E2/g, 'a')
+    .replace(/\u00E4/g, 'a')
+    .replace(/\u00F4/g, 'o')
+    .replace(/\u00F6/g, 'o')
+    .replace(/\u00FA/g, 'u')
+    .replace(/\u00FC/g, 'u')
+    .replace(/\u00F1/g, 'n')
+    .replace(/\u00C9/g, 'E')
+    .replace(/\u00C0/g, 'A')
+    .replace(/\u00C1/g, 'A')
+    .replace(/[^\x20-\x7E]/g, '');            // strip everything else above printable ASCII
+}
+
+// Thin gold rule
+function hRule(page: any, x: number, y: number, w: number, h = 0.7) {
+  page.drawRectangle({ x, y, width: w, height: h, color: C.gold });
+}
+
+// Diamond shape (rotated square)
+function diamond(page: any, cx: number, cy: number, size = 5) {
+  page.drawRectangle({
+    x: cx - size / 2, y: cy - size / 2,
+    width: size, height: size,
+    color: C.gold, rotate: degrees(45),
+  });
+}
+
+// Ornamental divider  ---<>---<>---<>---
+function divider(page: any, x: number, y: number, w: number) {
+  const mid = x + w / 2;
+  const gap = 8;
+  hRule(page, x, y + 2, (w / 2) - gap * 2 - 4);
+  diamond(page, mid - gap * 2, y + 2.5, 5);
+  diamond(page, mid,           y + 2.5, 8);
+  diamond(page, mid + gap * 2, y + 2.5, 5);
+  hRule(page, mid + gap * 2 + 8, y + 2, (w / 2) - gap * 2 - 4);
+}
+
+// Corner bracket ornament
+function corner(page: any, x: number, y: number, fx: boolean, fy: boolean, len = 28, t = 2) {
+  page.drawRectangle({ x: fx ? x - len : x, y: fy ? y - t : y, width: len, height: t, color: C.gold });
+  page.drawRectangle({ x: fx ? x - t : x, y: fy ? y - len : y, width: t, height: len, color: C.gold });
+  diamond(page, x, y, 6);
+}
+
+// Approximate centered text
+function centred(page: any, text: string, y: number, font: any, size: number, color: any, W: number, shift = 0) {
+  const x = (W - text.length * size * 0.52) / 2 + shift;
+  page.drawText(text, { x, y, size, font, color });
+}
+
+// Colours
 const C = {
   ivory:     rgb(0.98, 0.96, 0.90),
   cream:     rgb(0.96, 0.93, 0.85),
@@ -17,74 +84,10 @@ const C = {
   goldPale:  rgb(0.97, 0.93, 0.80),
   darkGreen: rgb(0.06, 0.18, 0.06),
   ink:       rgb(0.10, 0.09, 0.07),
-  inkLight:  rgb(0.28, 0.24, 0.18),
+  inkLight:  rgb(0.30, 0.26, 0.20),
   inkFaint:  rgb(0.50, 0.44, 0.34),
   white:     rgb(1.00, 1.00, 1.00),
 };
-
-// Thin horizontal rule
-function hRule(page: any, x: number, y: number, w: number, thickness = 0.6) {
-  page.drawRectangle({ x, y, width: w, height: thickness, color: C.gold });
-}
-
-// Small rotated square (diamond shape)
-function diamond(page: any, cx: number, cy: number, size = 5) {
-  page.drawRectangle({
-    x: cx - size / 2,
-    y: cy - size / 2,
-    width: size,
-    height: size,
-    color: C.gold,
-    rotate: degrees(45),
-  });
-}
-
-// Ornamental divider with diamonds
-function divider(page: any, x: number, y: number, w: number) {
-  const mid = x + w / 2;
-  const dw = 8;
-  hRule(page, x, y + 2, (w - dw * 2) / 2 - 6);
-  diamond(page, mid - dw, y + 2.5, 5);
-  diamond(page, mid,      y + 2.5, 7);
-  diamond(page, mid + dw, y + 2.5, 5);
-  hRule(page, mid + dw * 2 + 6, y + 2, (w - dw * 2) / 2 - 6);
-}
-
-// Corner bracket ornament
-function cornerBracket(
-  page: any,
-  x: number, y: number,
-  flipX: boolean, flipY: boolean,
-  len = 28, thick = 2
-) {
-  page.drawRectangle({
-    x: flipX ? x - len : x,
-    y: flipY ? y - thick : y,
-    width: len, height: thick, color: C.gold,
-  });
-  page.drawRectangle({
-    x: flipX ? x - thick : x,
-    y: flipY ? y - len : y,
-    width: thick, height: len, color: C.gold,
-  });
-  diamond(page, x, y, 6);
-}
-
-// Approximate centred text (Helvetica char width ~0.52 * size)
-function drawCentred(
-  page: any,
-  text: string,
-  y: number,
-  font: any,
-  size: number,
-  color: any,
-  pageWidth: number,
-  xShift = 0
-) {
-  const approxW = text.length * size * 0.52;
-  const x = (pageWidth - approxW) / 2 + xShift;
-  page.drawText(text, { x, y, size, font, color });
-}
 
 export async function createWeddingCardPdf(guest: PdfGuest) {
   const pdfDoc  = await PDFDocument.create();
@@ -94,172 +97,160 @@ export async function createWeddingCardPdf(guest: PdfGuest) {
   const regular = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const oblique = await pdfDoc.embedFont(StandardFonts.HelveticaOblique);
 
-  const weddingTitle = process.env.NEXT_PUBLIC_WEDDING_TITLE || "Gabby & Esther";
-  const weddingDate  = process.env.NEXT_PUBLIC_WEDDING_DATE  || "Saturday, 14th December 2024";
-  const weddingVenue = process.env.NEXT_PUBLIC_WEDDING_VENUE || "The Grand Ballroom, Eko Hotel & Suites";
-  const weddingTime  = process.env.NEXT_PUBLIC_WEDDING_TIME  || "12:00 PM";
+  // Sanitize ALL dynamic values so nothing can break the encoder
+  const title  = safe(process.env.NEXT_PUBLIC_WEDDING_TITLE  || "Gabby & Esther");
+  const date   = safe(process.env.NEXT_PUBLIC_WEDDING_DATE   || "Saturday, 14th December 2024");
+  const venue  = safe(process.env.NEXT_PUBLIC_WEDDING_VENUE  || "The Grand Ballroom, Eko Hotel & Suites");
+  const time   = safe(process.env.NEXT_PUBLIC_WEDDING_TIME   || "12:00 PM");
+  const name   = safe(guest.Name);
+  const code   = safe(guest.Unique_Code);
+  const seat   = safe(String(guest.Seat_Number ?? "TBA"));
+  const tag    = safe("#" + title.replace(/\s*&\s*/g, "And").replace(/\s/g, "") + "2024");
 
   // QR code
-  const qrDataUrl = await QRCode.toDataURL(guest.Unique_Code, {
-    margin: 1, width: 200,
-    color: { dark: "#111109", light: "#FAF7EE" },
-  });
-  const qrImage = await pdfDoc.embedPng(Buffer.from(qrDataUrl.split(",")[1], "base64"));
+  const qrPng   = await QRCode.toDataURL(code, { margin: 1, width: 200,
+    color: { dark: "#0f2e0f", light: "#f9f6ee" } });
+  const qrImage = await pdfDoc.embedPng(Buffer.from(qrPng.split(",")[1], "base64"));
 
+  // ----------------------------------------------------------------
   // BACKGROUND
+  // ----------------------------------------------------------------
   page.drawRectangle({ x: 0, y: 0, width: W, height: H, color: C.ivory });
-  page.drawRectangle({ x: 22, y: 22, width: W - 44, height: H - 44, color: C.cream });
+  page.drawRectangle({ x: 20, y: 20, width: W - 40, height: H - 40, color: C.cream });
 
-  // Double border
+  // Outer dark border
   page.drawRectangle({ x: 18, y: 18, width: W - 36, height: H - 36,
-    borderColor: C.darkGreen, borderWidth: 2.5, color: C.cream });
+    borderColor: C.darkGreen, borderWidth: 2.5 });
+  // Inner gold hairline
   page.drawRectangle({ x: 28, y: 28, width: W - 56, height: H - 56,
-    borderColor: C.gold, borderWidth: 0.8, color: undefined });
+    borderColor: C.gold, borderWidth: 0.8 });
 
-  // Corner brackets
-  const bOff = 36;
-  cornerBracket(page, bOff,     H - bOff, false, false);
-  cornerBracket(page, W - bOff, H - bOff, true,  false);
-  cornerBracket(page, bOff,     bOff,     false, true);
-  cornerBracket(page, W - bOff, bOff,     true,  true);
+  // Corner ornaments
+  const b = 36;
+  corner(page, b,     H - b, false, false);
+  corner(page, W - b, H - b, true,  false);
+  corner(page, b,     b,     false, true);
+  corner(page, W - b, b,     true,  true);
 
-  // DARK HEADER PANEL
-  const headerH = 210;
-  const headerY = H - 28 - headerH;
+  // ----------------------------------------------------------------
+  // HEADER BAND
+  // ----------------------------------------------------------------
+  const hH = 210, hY = H - 28 - hH;
+  page.drawRectangle({ x: 28, y: hY, width: W - 56, height: hH, color: C.darkGreen });
+  page.drawRectangle({ x: 28, y: hY + hH - 4, width: W - 56, height: 4, color: C.gold });
+  page.drawRectangle({ x: 28, y: hY,           width: W - 56, height: 4, color: C.gold });
+  page.drawRectangle({ x: 40, y: hY + 14, width: W - 80, height: hH - 28,
+    borderColor: C.goldLight, borderWidth: 0.5 });
 
-  page.drawRectangle({ x: 28, y: headerY, width: W - 56, height: headerH, color: C.darkGreen });
-  page.drawRectangle({ x: 28, y: headerY + headerH - 4, width: W - 56, height: 4, color: C.gold });
-  page.drawRectangle({ x: 28, y: headerY, width: W - 56, height: 4, color: C.gold });
+  centred(page, "-- WEDDING INVITATION --", hY + hH - 55,  bold,    9,  C.goldLight, W);
+  centred(page, title,                      hY + hH - 108, bold,    36, C.goldPale,  W);
+  hRule(page, 90, hY + hH - 118, W - 180);
+  centred(page, "Together with their families request the pleasure of your company",
+    hY + hH - 140, oblique, 9, C.goldLight, W);
+  centred(page, "* RSVP ADMISSION CARD *", hY + 18, bold, 9, C.goldLight, W);
 
-  // Inner gold frame inside header
-  page.drawRectangle({
-    x: 40, y: headerY + 14, width: W - 80, height: headerH - 28,
-    borderColor: C.goldLight, borderWidth: 0.5,
-  });
-
-  // Header text - pure ASCII only
-  drawCentred(page, "-- WEDDING INVITATION --", headerY + headerH - 55,
-    bold, 9, C.goldLight, W);
-  drawCentred(page, weddingTitle, headerY + headerH - 110,
-    bold, 38, C.goldPale, W);
-  hRule(page, 90, headerY + headerH - 120, W - 180);
-  drawCentred(page, "Together with their families, request the pleasure of your company",
-    headerY + headerH - 142, oblique, 9, C.goldLight, W);
-  drawCentred(page, "* RSVP ADMISSION CARD *", headerY + 18, bold, 9, C.goldLight, W);
-
-  // GUEST PHOTO
-  const photoSize = 120;
-  const photoX = W - photoSize - 55;
-  const photoY = headerY - photoSize / 2;
+  // ----------------------------------------------------------------
+  // GUEST PHOTO (straddles header bottom edge)
+  // ----------------------------------------------------------------
+  const pSz = 120, pX = W - pSz - 55, pY = hY - pSz / 2;
 
   if (guest.imageBase64) {
     try {
       const [hdr, b64] = guest.imageBase64.split(",");
       const mime = hdr.match(/data:([^;]+)/)?.[1] ?? "image/jpeg";
       const buf  = Buffer.from(b64, "base64");
-      const img  = mime === "image/png"
-        ? await pdfDoc.embedPng(buf)
-        : await pdfDoc.embedJpg(buf);
+      const img  = mime === "image/png" ? await pdfDoc.embedPng(buf) : await pdfDoc.embedJpg(buf);
 
-      page.drawRectangle({ x: photoX - 5, y: photoY - 5,
-        width: photoSize + 10, height: photoSize + 10, color: C.darkGreen });
-      page.drawRectangle({ x: photoX - 3, y: photoY - 3,
-        width: photoSize + 6, height: photoSize + 6, color: C.gold });
-      page.drawRectangle({ x: photoX - 1, y: photoY - 1,
-        width: photoSize + 2, height: photoSize + 2, color: C.white });
-      page.drawImage(img, { x: photoX, y: photoY, width: photoSize, height: photoSize });
+      // Layered frame: dark shadow -> gold border -> white mat -> photo
+      page.drawRectangle({ x: pX - 5, y: pY - 5, width: pSz + 10, height: pSz + 10, color: C.darkGreen });
+      page.drawRectangle({ x: pX - 3, y: pY - 3, width: pSz +  6, height: pSz +  6, color: C.gold });
+      page.drawRectangle({ x: pX - 1, y: pY - 1, width: pSz +  2, height: pSz +  2, color: C.white });
+      page.drawImage(img, { x: pX, y: pY, width: pSz, height: pSz });
 
-      const lx = photoX + photoSize / 2 - 18;
-      page.drawRectangle({ x: photoX - 3, y: photoY - 22,
-        width: photoSize + 6, height: 18, color: C.darkGreen });
-      page.drawText("G U E S T", {
-        x: lx, y: photoY - 16, size: 7, font: bold, color: C.goldLight,
-      });
+      // "GUEST" label badge
+      page.drawRectangle({ x: pX - 3, y: pY - 22, width: pSz + 6, height: 18, color: C.darkGreen });
+      page.drawText("G U E S T", { x: pX + pSz / 2 - 18, y: pY - 16,
+        size: 7, font: bold, color: C.goldLight });
     } catch (e) {
       console.error("Photo embed failed:", e);
     }
   }
 
+  // ----------------------------------------------------------------
   // GUEST DETAILS
-  const detailX = 55;
-  const detailW = guest.imageBase64 ? photoX - detailX - 20 : W - 110;
-  let cy = headerY - 50;
+  // ----------------------------------------------------------------
+  const dX = 55, dW = guest.imageBase64 ? pX - dX - 20 : W - 110;
+  let cy = hY - 50;
 
-  const fieldLabel = (label: string, y: number) =>
-    page.drawText(label, { x: detailX, y, size: 8, font: bold, color: C.gold });
+  const lbl = (t: string, y: number) =>
+    page.drawText(t, { x: dX, y, size: 8, font: bold, color: C.gold });
+  const val = (t: string, y: number, mw = 300) =>
+    page.drawText(t, { x: dX, y: y - 18, size: 15, font: bold, color: C.ink, maxWidth: mw });
 
-  const fieldValue = (value: string, y: number, maxW = 300) =>
-    page.drawText(value, { x: detailX, y: y - 17, size: 15, font: bold, color: C.ink, maxWidth: maxW });
-
-  fieldLabel("GUEST NAME", cy);
-  fieldValue(guest.Name, cy, detailW);
-
+  lbl("GUEST NAME", cy);   val(name, cy, dW);
   cy -= 52;
-  fieldLabel("SEAT NUMBER", cy);
-  fieldValue(String(guest.Seat_Number ?? "TBA"), cy, detailW);
-
+  lbl("SEAT NUMBER", cy);  val(seat, cy, dW);
   cy -= 52;
-  fieldLabel("UNIQUE CODE", cy);
-  const codeBadgeY = cy - 20;
-  page.drawRectangle({ x: detailX, y: codeBadgeY, width: 160, height: 22, color: C.darkGreen });
-  page.drawText(guest.Unique_Code, {
-    x: detailX + 10, y: codeBadgeY + 7, size: 11, font: bold, color: C.goldPale,
-  });
+  lbl("UNIQUE CODE", cy);
 
+  const badgeY = cy - 22;
+  page.drawRectangle({ x: dX, y: badgeY, width: 170, height: 24, color: C.darkGreen });
+  page.drawRectangle({ x: dX, y: badgeY, width: 170, height: 24, borderColor: C.gold, borderWidth: 0.5 });
+  page.drawText(code, { x: dX + 10, y: badgeY + 7, size: 12, font: bold, color: C.goldPale });
+
+  // ----------------------------------------------------------------
   // DIVIDER 1
-  const divY = headerY - 220;
-  divider(page, 55, divY, W - 110);
+  // ----------------------------------------------------------------
+  const d1Y = hY - 222;
+  divider(page, 55, d1Y, W - 110);
 
+  // ----------------------------------------------------------------
   // EVENT DETAILS
-  const evY = divY - 30;
-  const col1X = 55, col2X = W / 2 + 10;
+  // ----------------------------------------------------------------
+  const eY = d1Y - 32;
+  const c1 = 55, c2 = W / 2 + 10;
 
-  page.drawText("DATE", { x: col1X, y: evY, size: 8, font: bold, color: C.gold });
-  page.drawText(weddingDate, { x: col1X, y: evY - 18, size: 11, font: bold, color: C.ink, maxWidth: 240 });
+  page.drawText("DATE", { x: c1, y: eY,      size: 8,  font: bold,    color: C.gold });
+  page.drawText(date,   { x: c1, y: eY - 18, size: 11, font: bold,    color: C.ink,  maxWidth: 240 });
+  page.drawText("TIME", { x: c2, y: eY,      size: 8,  font: bold,    color: C.gold });
+  page.drawText(time,   { x: c2, y: eY - 18, size: 11, font: bold,    color: C.ink });
+  page.drawRectangle({ x: W / 2 - 1, y: eY - 24, width: 0.7, height: 40, color: C.goldLight });
 
-  page.drawText("TIME", { x: col2X, y: evY, size: 8, font: bold, color: C.gold });
-  page.drawText(weddingTime, { x: col2X, y: evY - 18, size: 11, font: bold, color: C.ink });
+  const vY = eY - 70;
+  page.drawText("VENUE", { x: c1, y: vY,      size: 8,  font: bold,    color: C.gold });
+  page.drawText(venue,   { x: c1, y: vY - 18, size: 11, font: bold,    color: C.ink,  maxWidth: W - 110 });
 
-  page.drawRectangle({ x: W / 2 - 1, y: evY - 22, width: 0.6, height: 36, color: C.goldLight });
-
-  const venY = evY - 68;
-  page.drawText("VENUE", { x: col1X, y: venY, size: 8, font: bold, color: C.gold });
-  page.drawText(weddingVenue, { x: col1X, y: venY - 18, size: 11, font: bold, color: C.ink, maxWidth: W - 110 });
-
+  // ----------------------------------------------------------------
   // DIVIDER 2
-  const div2Y = venY - 60;
-  divider(page, 55, div2Y, W - 110);
+  // ----------------------------------------------------------------
+  const d2Y = vY - 62;
+  divider(page, 55, d2Y, W - 110);
 
-  // QR CODE
-  const qrSize = 130;
-  const qrX = W - qrSize - 55;
-  const qrY = div2Y - qrSize - 30;
+  // ----------------------------------------------------------------
+  // QR CODE + NOTES
+  // ----------------------------------------------------------------
+  const qSz = 130, qX = W - qSz - 55, qY = d2Y - qSz - 30;
 
-  page.drawRectangle({ x: qrX - 6, y: qrY - 6, width: qrSize + 12, height: qrSize + 12, color: C.darkGreen });
-  page.drawRectangle({ x: qrX - 3, y: qrY - 3, width: qrSize + 6, height: qrSize + 6, color: C.gold });
-  page.drawImage(qrImage, { x: qrX, y: qrY, width: qrSize, height: qrSize });
-  drawCentred(page, "SCAN TO VERIFY", qrY - 16, bold, 7, C.inkFaint, W,
-    (qrX + qrSize / 2) - W / 2);
+  page.drawRectangle({ x: qX - 6, y: qY - 6, width: qSz + 12, height: qSz + 12, color: C.darkGreen });
+  page.drawRectangle({ x: qX - 3, y: qY - 3, width: qSz +  6, height: qSz +  6, color: C.gold });
+  page.drawImage(qrImage, { x: qX, y: qY, width: qSz, height: qSz });
+  centred(page, "SCAN TO VERIFY", qY - 16, bold, 7, C.inkFaint, W, (qX + qSz / 2) - W / 2);
 
-  // NOTES
-  const noteX = 55;
-  const noteY = div2Y - 35;
+  const nX = 55, nY = d2Y - 35;
+  page.drawText("DRESS CODE",           { x: nX, y: nY,      size: 8,  font: bold,    color: C.gold });
+  page.drawText("Black Tie / Formal",   { x: nX, y: nY - 18, size: 11, font: regular, color: C.ink });
+  page.drawText("KINDLY NOTE",          { x: nX, y: nY - 52, size: 8,  font: bold,    color: C.gold });
+  page.drawText("Present this card at", { x: nX, y: nY - 70, size: 10, font: regular, color: C.inkLight });
+  page.drawText("the entrance.",        { x: nX, y: nY - 84, size: 10, font: regular, color: C.inkLight });
 
-  page.drawText("DRESS CODE", { x: noteX, y: noteY, size: 8, font: bold, color: C.gold });
-  page.drawText("Black Tie / Formal Attire", { x: noteX, y: noteY - 18, size: 11, font: regular, color: C.ink });
-
-  page.drawText("KINDLY NOTE", { x: noteX, y: noteY - 54, size: 8, font: bold, color: C.gold });
-  page.drawText("Please present this card at", { x: noteX, y: noteY - 72, size: 10, font: regular, color: C.inkLight });
-  page.drawText("the entrance for admission.", { x: noteX, y: noteY - 86, size: 10, font: regular, color: C.inkLight });
-
+  // ----------------------------------------------------------------
   // FOOTER BAND
-  const footerH = 52;
-  page.drawRectangle({ x: 28, y: 28, width: W - 56, height: footerH, color: C.darkGreen });
-  page.drawRectangle({ x: 28, y: 28 + footerH - 4, width: W - 56, height: 4, color: C.gold });
-
-  drawCentred(page, "We can't wait to celebrate with you!", 44, oblique, 11, C.goldPale, W);
-  drawCentred(page, "#" + weddingTitle.replace(/\s*&\s*/, "And").replace(/\s/g, "") + "2024",
-    32, bold, 8, C.goldLight, W);
+  // ----------------------------------------------------------------
+  const fH = 52;
+  page.drawRectangle({ x: 28, y: 28,          width: W - 56, height: fH, color: C.darkGreen });
+  page.drawRectangle({ x: 28, y: 28 + fH - 4, width: W - 56, height: 4,  color: C.gold });
+  centred(page, "We look forward to celebrating with you!", 44, oblique, 11, C.goldPale, W);
+  centred(page, tag, 32, bold, 8, C.goldLight, W);
 
   return pdfDoc.save();
 }
