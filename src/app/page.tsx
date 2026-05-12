@@ -18,7 +18,9 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 function normalizePhone(phone: string) {
   const digits = phone.replace(/\D/g, "");
   if (digits.startsWith("234")) return `0${digits.slice(3)}`;
-  return digits.startsWith("0") ? digits : digits;
+  if (digits.startsWith("0")) return digits;
+  if (digits.length === 10) return `0${digits}`; // e.g. 8012345678 -> 08012345678
+  return digits;
 }
 
 export default function HomePage() {
@@ -47,7 +49,7 @@ export default function HomePage() {
       const response = await fetch("/api/check-guest", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone }),
+        body: JSON.stringify({ phone: normalizePhone(phone) }),
       });
 
       const data = await response.json();
@@ -98,7 +100,7 @@ export default function HomePage() {
       const response = await fetch("/api/rsvp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone: guest.Phone, email, attendance, image }),
+        body: JSON.stringify({ phone: guest.Phone, email, attendance }),
       });
 
       const data = await response.json();
@@ -121,8 +123,8 @@ export default function HomePage() {
   };
 
   const downloadCard = async () => {
-    if (!guest?.Unique_Code) {
-      setErrorMessage("No unique code found. Please submit your RSVP first.");
+    if (!guest?.Unique_Code || guest.Unique_Code.trim() === "") {
+      setErrorMessage("No admission code found. Please re-verify your phone number to retrieve your code, then try again.");
       return;
     }
 

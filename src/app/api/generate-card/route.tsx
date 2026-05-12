@@ -1,3 +1,4 @@
+import React from 'react';
 import { ImageResponse } from 'next/og';
 import { findGuestByUniqueCode } from '@/lib/airtable';
 import QRCode from 'qrcode';
@@ -48,7 +49,8 @@ export async function POST(req: Request) {
     const name  = safe(guest.Name);
     const seat  = safe(String(guest.Seat_Number ?? 'TBA'));
     const ucode = safe(guest.Unique_Code ?? code);
-    const tag   = '#' + safe(title.replace(/\s*&\s*/g, 'And').replace(/\s/g, '')) + '2024';
+    const year  = (process.env.NEXT_PUBLIC_WEDDING_DATE ?? '').match(/\d{4}/)?.[0] ?? new Date().getFullYear().toString();
+    const tag   = '#' + safe(title.replace(/\s*&\s*/g, 'And').replace(/\s/g, '')) + year;
 
     const BG     = '#F8F4E3';
     const GREEN  = '#0A2810';

@@ -48,7 +48,7 @@ function buildGuest(record: any): GuestRecord {
     RSVP_Status: record.fields.RSVP_Status || "Pending",
     Attendance: record.fields.Attendance || "",
     Seat_Number: record.fields.Seat_Number,
-    Unique_Code: record.fields.Unique_Code || "",
+    Unique_Code: record.fields.Unique_Code || undefined,
     Image: record.fields.Image,
   };
 }

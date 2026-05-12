@@ -19,7 +19,7 @@ export async function POST(req: Request) {
     // generate and save one now so they can download their card.
     if (guest.RSVP_Status === "Confirmed" && !guest.Unique_Code) {
       const uniqueCode = generateUniqueCode();
-      const seatNumber = guest.Seat_Number ?? await getNextSeatNumber();
+      const seatNumber = guest.Seat_Number != null ? guest.Seat_Number : await getNextSeatNumber();
       guest = await updateGuest(guest.id, {
         Unique_Code: uniqueCode,
         Seat_Number: seatNumber,
